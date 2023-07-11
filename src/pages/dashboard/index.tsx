@@ -3,12 +3,14 @@ import TimeAgo from 'javascript-time-ago'
 
 import en from 'javascript-time-ago/locale/en'
 
-
 import {VeridaExampleServerSideProps, veridaExampleServerSideProps} from '../../features/analytics/analytics_api';
 import {Row} from "../../components/layout/flex";
 import {AppList, Card, RImage as Image, Text} from "../../components";
 import {Dapp} from "../../features/dapp/models/dapp";
 import {Tag} from "../../components/app_list";
+import dynamic from "next/dynamic";
+
+const MonacoEditor = dynamic(import("react-monaco-editor"), { ssr: false });
 
 TimeAgo.addDefaultLocale(en)
 
@@ -33,8 +35,9 @@ export default function Dashboard({
         className="grid gap-8 grid-cols-1"
         data={dapps}
         renderDapp={React.useCallback((dapp: Dapp) => {
-          const {length: clickThroughCount} = clicks
+          const matchingClicks = clicks
             .filter(({dappId}) => dappId === dapp.dappId);
+          const {length: clickThroughCount} = matchingClicks;
           const [maybeInsertedAt] = clicks
             .flatMap(({insertedAt})=> insertedAt ? [new Date(insertedAt)] : [])
             .sort((a, b) => b.getTime() - a.getTime());
@@ -65,6 +68,17 @@ export default function Dashboard({
                     </Text>
                   </aside>
                 )}
+              </Row>
+              <Row className="items-start justify-start mt-4">
+                <MonacoEditor
+                  width="100%"
+                  height="200"
+                  language="json"
+                  value={JSON.stringify(matchingClicks, undefined, 2)}
+                  theme="vs-dark"
+                  onChange={console.log}
+                  editorDidMount={console.log}
+                />
               </Row>
             </Card>
           );

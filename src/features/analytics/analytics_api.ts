@@ -49,11 +49,13 @@ export type VeridaExampleServerSideProps = {
 
 export const veridaExampleServerSideProps: GetServerSideProps<VeridaExampleServerSideProps> = async () => {
 
+	const limit = 100;
+
 	const [fetchClicks, fetchDapps] = await Promise.all([
 		fetch(`${process.env.NEXT_PUBLIC_HOST_PATH}/api/clicks`),
 		// TODO: fetch these more conventionally
 		// TODO: these are a duplicate of pages/index.
-		fetch(`${BASE_URL}/${ApiEndpoints.APP_LIST}?limit=10&page=1&chainId=137&orderBy=name:asc`, {
+		fetch(`${BASE_URL}/${ApiEndpoints.APP_LIST}?limit=${limit}&page=1&chainId=137&orderBy=name:asc`, {
 			method: 'GET',
 			headers: {
 				// HACK: This is a duplicate of api/api.ts.
@@ -67,6 +69,8 @@ export const veridaExampleServerSideProps: GetServerSideProps<VeridaExampleServe
 		fetchClicks.json(),
 		fetchDapps.json(),
 	]);
+
+	console.log('got', clicks, dapps)
 
 	const clickedDapps: readonly Dapp[] = [...new Set(clicks.map((click: Click) => click.dappId))]
 		.flatMap((dappId): readonly Dapp[] => {
