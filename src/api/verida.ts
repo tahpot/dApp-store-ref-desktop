@@ -1,4 +1,4 @@
-import { Client, Context } from '@verida/client-ts'
+import { Client } from '@verida/client-ts'
 import { AutoAccount } from '@verida/account-node'
 import { EnvironmentType, IContext, Web3CallType } from '@verida/types'
 
@@ -7,7 +7,8 @@ const CONTEXT_NAME = 'PolygonID: dAppstore'
 const CLICK_DB_NAME = 'clicks'
 
 export interface Click {
-    wallet: string,
+    dappId: string,
+    wallet?: string,
     url?: string,
     insertedAt?: string
 }
@@ -16,16 +17,19 @@ const DID_CLIENT_CONFIG = {
     callType: <Web3CallType> 'web3',
     web3Config: {
         rpcUrl: 'https://polygon-mumbai.g.alchemy.com/v2/Q4NRuRlwTNyI90dDCgiX_KT_vS_2gpbN',
-        privateKey: ''
+        privateKey: process.env.VERIDA_DID_PRIVATE_KEY,
     }
 }
 
 let veridaContext = <IContext | undefined> undefined
 
 export const getVeridaContext = async function(): Promise<IContext | undefined> {
-    if (veridaContext) {
-        return veridaContext
-    }
+
+    // TODO: Unfortunately NextJS calls are designed to be stateless, so here we run
+    //       through initialization every time, which results in a slow response.
+    //       Are there any shortcuts to quickly allocating a VeridaContext? For example,
+    //       if it were possible to hardcode all the evaluated runtime dependencies?
+    if (veridaContext) return veridaContext
 
     // establish a network connection
     const client = new Client({
@@ -35,7 +39,7 @@ export const getVeridaContext = async function(): Promise<IContext | undefined> 
     // create a Verida account instance that wraps the authorized Verida DID server connection
     // The `AutoAccount` instance will automatically sign any consent messages
     const account = new AutoAccount({
-        privateKey: '',
+        privateKey: `0x${process.env.VERIDA_DID_PRIVATE_KEY}`,
         environment: VERIDA_ENVIRONMENT,
         didClientConfig: DID_CLIENT_CONFIG
     })
@@ -45,9 +49,8 @@ export const getVeridaContext = async function(): Promise<IContext | undefined> 
 
     // Open an application context (forcing creation of a new context if it doesn't already exist)
     const context = await client.openContext(CONTEXT_NAME, true)
-    if (context) {
-        veridaContext = context
-    }
+
+    if (context) veridaContext = context
 
     return veridaContext
 }
